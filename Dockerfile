@@ -1,14 +1,17 @@
 # ==========================
-# Stage 1: Build con Gradle
+# Stage 1: Build con Gradle Wrapper
 # ==========================
-FROM gradle:8.7-jdk21 AS build
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 
-# Copiar todo el proyecto
+# Copiamos todo el proyecto
 COPY . .
 
-# Construir el jar sin daemon (necesario en Render)
-RUN gradle clean build -x test --no-daemon
+# Permisos para ejecutar gradlew en Linux
+RUN chmod +x ./gradlew
+
+# Build usando el wrapper, sin daemon y con memoria controlada (Render Free)
+RUN ./gradlew clean build -x test --no-daemon -Dorg.gradle.jvmargs="-Xmx1g -XX:MaxMetaspaceSize=256m"
 
 # ==========================
 # Stage 2: Run con Java 21
@@ -16,11 +19,7 @@ RUN gradle clean build -x test --no-daemon
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 
-# Copiar el jar generado desde el stage build
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# Puerto estándar Spring
 EXPOSE 8080
-
-# Ejecutar la aplicación
 ENTRYPOINT ["java","-jar","app.jar"]
