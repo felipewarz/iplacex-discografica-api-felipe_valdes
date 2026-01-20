@@ -8,9 +8,9 @@ COPY . .
 RUN gradle clean build -x test
 
 # ==========================
-# Stage 2: Run con OpenJDK
+# Stage 2: Run con Java 21
 # ==========================
-FROM openjdk:21-jdk-slim
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 
 COPY --from=build /app/build/libs/*.jar app.jar
